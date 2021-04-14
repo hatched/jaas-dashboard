@@ -12,7 +12,6 @@ import Button from "@canonical/react-components/dist/components/Button";
 import MainTable from "@canonical/react-components/dist/components/MainTable";
 
 import ButtonGroup from "components/ButtonGroup/ButtonGroup";
-import InfoPanel from "components/InfoPanel/InfoPanel";
 import EntityInfo from "components/EntityInfo/EntityInfo";
 import ChipGroup from "components/ChipGroup/ChipGroup";
 import FormikFormData from "components/FormikFormData/FormikFormData";
@@ -106,16 +105,6 @@ export default function App(): JSX.Element {
     withDefault(StringParam, "units")
   );
 
-  const [query, setQuery] = useQueryParams({
-    activeView: withDefault(StringParam, "apps"),
-    entity: StringParam,
-    panel: StringParam,
-  });
-
-  const showConfig = () => {
-    query && setQuery({ panel: "config", entity: entity });
-  };
-
   const AppEntityData = {
     status:
       app && app.status?.status
@@ -188,21 +177,7 @@ export default function App(): JSX.Element {
   };
 
   return (
-    <EntityDetails type="app" className="entity-details__app">
-      <div>
-        <InfoPanel />
-        <>
-          <div className="entity-details__actions">
-            <button
-              className="entity-details__action-button"
-              onClick={showConfig}
-            >
-              <i className="p-icon--settings"></i>Configure
-            </button>
-          </div>
-          <EntityInfo data={AppEntityData} />
-        </>
-      </div>
+    <EntityDetails type="app" className="entity-details__app" showButtonSegment>
       <div className="entity-details__main u-overflow--scroll">
         <ButtonGroup
           buttons={["units", "machines"]}
