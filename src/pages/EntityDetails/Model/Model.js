@@ -2,7 +2,7 @@ import { useMemo, useCallback } from "react";
 import MainTable from "@canonical/react-components/dist/components/MainTable";
 import { useQueryParams, StringParam, withDefault } from "use-query-params";
 import { useHistory, useParams } from "react-router-dom";
-import { pluralize, extractCloudName } from "app/utils/utils";
+import { pluralize } from "app/utils/utils";
 
 import {
   appsOffersTableHeaders,
@@ -24,11 +24,9 @@ import {
   generateAppOffersRows,
 } from "tables/tableRows";
 
-import InfoPanel from "components/InfoPanel/InfoPanel";
 import ContentReveal from "components/ContentReveal/ContentReveal";
 
 import EntityDetails from "pages/EntityDetails/EntityDetails";
-import EntityInfo from "components/EntityInfo/EntityInfo";
 
 import useModelStatus from "hooks/useModelStatus";
 import useTableRowClick from "hooks/useTableRowClick";
@@ -107,17 +105,6 @@ const Model = () => {
     () => generateAppOffersRows(modelStatusData, panelRowClick, query),
     [modelStatusData, panelRowClick, query]
   );
-  const cloudProvider = modelStatusData
-    ? extractCloudName(modelStatusData.model["cloud-tag"])
-    : "";
-
-  const ModelEntityData = {
-    controller: modelStatusData?.model.type,
-    "Cloud/Region": `${cloudProvider} / ${modelStatusData?.model.region}`,
-    version: modelStatusData?.model.version,
-    sla: modelStatusData?.model.sla,
-    provider: modelStatusData?.info?.["provider-type"],
-  };
 
   const LocalAppChips = renderCounts("localApps", modelStatusData);
   const appOffersChips = renderCounts("offers", modelStatusData);
@@ -240,10 +227,6 @@ const Model = () => {
 
   return (
     <EntityDetails type="model">
-      <div>
-        <InfoPanel />
-        {modelStatusData && <EntityInfo data={ModelEntityData} />}
-      </div>
       <div className="entity-details__main u-overflow--scroll">
         {shouldShow("apps", query.activeView) && (
           <>
