@@ -11,6 +11,8 @@ import Header from "components/Header/Header";
 import WebCLI from "components/WebCLI/WebCLI";
 import SlidePanel from "components/SlidePanel/SlidePanel";
 import Breadcrumb from "components/Breadcrumb/Breadcrumb";
+import EntityInfo from "components/EntityInfo/EntityInfo";
+import InfoPanel from "components/InfoPanel/InfoPanel";
 
 import ConfigPanel from "panels/ConfigPanel/ConfigPanel";
 import RemoteAppsPanel from "panels/RemoteAppsPanel/RemoteAppsPanel";
@@ -23,6 +25,7 @@ import {
   getModelUUID,
   getUserPass,
 } from "app/selectors";
+import { extractCloudName } from "app/utils/utils";
 
 import useModelStatus from "hooks/useModelStatus";
 import useWindowTitle from "hooks/useWindowTitle";
@@ -43,9 +46,14 @@ function generatePanelContent(activePanel, entity, panelRowClick) {
   }
 }
 
-const EntityDetails = ({ type, children, className }) => {
+const EntityDetails = ({
+  type,
+  children,
+  className,
+  showButtonSegment = false,
+}) => {
   const modelStatusData = useModelStatus();
-  const { userName, modelName } = useParams();
+  const { userName, modelName, machineId } = useParams();
   const history = useHistory();
 
   const [query, setQuery] = useQueryParams({
@@ -60,7 +68,7 @@ const EntityDetails = ({ type, children, className }) => {
 
   const { panel: activePanel, entity, activeView } = query;
   const closePanelConfig = { panel: undefined, entity: undefined };
-
+  console.log(activePanel, entity, activeView);
   const dispatch = useDispatch();
   const store = useStore();
   const storeState = store.getState();
@@ -185,6 +193,58 @@ const EntityDetails = ({ type, children, className }) => {
     }
   };
 
+  const getEntityInfoData = (activeView) => {
+    if (activeView === "apps") {
+      const cloudProvider = modelStatusData
+        ? extractCloudName(modelStatusData.model["cloud-tag"])
+        : "";
+
+      return {
+        controller: modelStatusData?.model.type,
+        "Cloud/Region": `${cloudProvider} / ${modelStatusData?.model.region}`,
+        version: modelStatusData?.model.version,
+        sla: modelStatusData?.model.sla,
+        provider: modelStatusData?.info?.["provider-type"],
+      };
+    }
+
+    if (activeView === "machines") {
+      const machine = modelStatusData?.machines[machineId];
+      const getHardwareSpecs = () => {
+        if (!machine) return {};
+        const hardware = {};
+        const hardwareArr = machine.hardware.split(" ");
+        hardwareArr.forEach((spec) => {
+          const [name, value] = spec.split("=");
+          hardware[name] = value;
+        });
+        return hardware;
+      };
+      const hardware = getHardwareSpecs();
+
+      return {
+        memory: hardware?.["mem"] || "-",
+        disk: hardware?.["root-disk"] || "-",
+        cpu: hardware?.["cpu-power"] || "-",
+        cores: hardware?.["cores"] || "-",
+        message: machine?.["agent-status"].info,
+      };
+    }
+  };
+
+  const generateButtonSegment = () => {
+    const showConfig = () => {
+      query && setQuery({ panel: "config", entity: entity });
+    };
+    return (
+      <div className="entity-details__actions">
+        <button className="entity-details__action-button" onClick={showConfig}>
+          <i className="p-icon--settings"></i>Configure
+        </button>
+      </div>
+    );
+  };
+
   return (
     <BaseLayout className={className}>
       <Header>
@@ -223,6 +283,11 @@ const EntityDetails = ({ type, children, className }) => {
         <FadeIn isActive={modelStatusData}>
           <div className="l-content">
             <div className={`entity-details entity-details__${type}`}>
+              <div>
+                <InfoPanel />
+                {showButtonSegment ? generateButtonSegment() : null}
+                <EntityInfo data={getEntityInfoData(activeView)} />
+              </div>
               <>
                 {children}
                 {generateActivePanel()}
