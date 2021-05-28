@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect } from "react";
 import MainTable from "@canonical/react-components/dist/components/MainTable";
 import {
   useQueryParams,
@@ -8,6 +8,7 @@ import {
 } from "use-query-params";
 import { useHistory, useParams } from "react-router-dom";
 import { pluralize, extractCloudName } from "app/utils/utils";
+import { useStore } from "react-redux";
 
 import {
   appsOffersTableHeaders,
@@ -41,6 +42,8 @@ import useTableRowClick from "hooks/useTableRowClick";
 
 import ChipGroup from "components/ChipGroup/ChipGroup";
 
+import { startModelWatcher } from "juju/index";
+
 import { renderCounts } from "../counts";
 
 const shouldShow = (segment, activeView) => {
@@ -62,6 +65,7 @@ const shouldShow = (segment, activeView) => {
 };
 
 const Model = () => {
+  const appState = useStore().getState();
   const modelStatusData = useModelStatus();
   const history = useHistory();
   const { userName, modelName } = useParams();
@@ -71,6 +75,15 @@ const Model = () => {
     entity: StringParam,
     activeView: withDefault(StringParam, "apps"),
   });
+
+  const uuid = modelStatusData?.info?.uuid;
+
+  useEffect(() => {
+    if (uuid) {
+      console.log("starting watcher");
+      startModelWatcher(uuid, appState);
+    }
+  }, [uuid]);
 
   const tableRowClick = useTableRowClick();
 
